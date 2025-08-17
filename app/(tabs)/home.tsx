@@ -15,19 +15,22 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  Modal
+  Modal,
+  SafeAreaView,
 } from "react-native";
 import BottomNavigation from "../../components/BottomNavigation";
 import EducationScreen from "../../components/EducationScreen";
 import ProfileScreen from "../../components/ProfileScreen";
 import { apiService, Program, Test } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get("window");
 
 // Modern color palette
 const COLORS = {
-  primary: "#6366f1",
-  secondary: "#4f46e5",
+  primary: '#019f8c',
+  secondary: "#007b80",
   accent: "#06b6d4",
   background: "#f8fafc",
   card: "#ffffff",
@@ -59,6 +62,7 @@ const ICONS = {
   users: "users" as const,
   award: "certificate" as const,
   chevronRight: "chevron-right" as const,
+  fileTextO: "file-text-o" as const,
 };
 
 interface StreamItem {
@@ -68,6 +72,8 @@ interface StreamItem {
   gradient: string[];
   description: string;
   courses: number;
+  type?: 'program' | 'test';
+  testData?: Test;
 }
 
 interface CourseItem {
@@ -118,7 +124,14 @@ const HomeScreen = () => {
     message: ''
   });
   const [isSubmittingEnquiry, setIsSubmittingEnquiry] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [searchResults, setSearchResults] = useState<StreamItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Calculate responsive card width based on screen size
+  const cardWidth = Math.min(160, (width - 60) / 2.5);
+  const cardHeight = Math.max(200, cardWidth * 1.25);
 
   // Academy cards data
   const academyCards: AcademyCard[] = [
@@ -127,17 +140,17 @@ const HomeScreen = () => {
       title: "India's Best NDA Academy",
       description: "We have the India's best institute of NDA academy",
       buttonText: "Enquire Now",
-      backgroundImage: require('../../assets/Nda.jpg'),
+      backgroundImage: require('../../assets/2.png'),
     },
     {
       id: '2',
       title: "Scholarship Program",
-      description: "We also run the scholarship program",
+      description: "We also run a scholarship program that helps students achieve their educational dreams.",
       buttonText: "Enquire Now",
-      backgroundImage: require('../../assets/scollership.jpg'),
+      backgroundImage: require('../../assets/4.png'),
     },
   ];
-  
+
   const headerTranslateY = scrollY.interpolate({
     inputRange: [0, 60],
     outputRange: [0, -50],
@@ -155,19 +168,90 @@ const HomeScreen = () => {
   // Fetch programs from API
   useEffect(() => {
     fetchPrograms();
+    fetchUserData();
   }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const storedUserData = await AsyncStorage.getItem('userData');
+      if (storedUserData) {
+        const parsedUserData = JSON.parse(storedUserData);
+        setUserData(parsedUserData);
+        console.log('✅ User data loaded:', parsedUserData);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+
+    if (query.trim().length === 0) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    // Search in programs
+    const filteredPrograms = programs.filter(program =>
+      program.name.toLowerCase().includes(query.toLowerCase()) ||
+      (program.description && program.description.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    // Search in tests
+    const filteredTests = allTests.filter(test =>
+      test.title.toLowerCase().includes(query.toLowerCase()) ||
+      (test.description && test.description.toLowerCase().includes(query.toLowerCase()))
+    );
+
+    // Convert filtered programs to StreamItem format
+    const programResults: StreamItem[] = filteredPrograms.map((program) => ({
+      id: program.id.toString(),
+      name: program.name,
+      icon: getProgramIcon(program.name),
+      gradient: getProgramGradient(program.name),
+      description: program.description || `${program.name} Program`,
+      courses: getTestCountForProgram(program.id),
+      type: 'program'
+    }));
+
+    // Convert filtered tests to StreamItem format
+    const testResults: StreamItem[] = filteredTests.map((test) => ({
+      id: `test_${test.id}`,
+      name: test.title,
+      icon: 'fileTextO' as keyof typeof ICONS,
+      gradient: ['#8b5cf6', '#7c3aed'],
+      description: test.description || 'Test',
+      courses: 1,
+      type: 'test',
+      testData: test
+    }));
+
+    // Combine and sort results
+    const combinedResults = [...programResults, ...testResults];
+    setSearchResults(combinedResults);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setIsSearching(false);
+  };
 
   const fetchPrograms = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch both programs and tests
       const [programsResponse, testsResponse] = await Promise.all([
         apiService.getPrograms(),
         apiService.getAllTests()
       ]);
-      
+
       if (programsResponse.success) {
         setPrograms(programsResponse.data);
       } else {
@@ -177,7 +261,7 @@ const HomeScreen = () => {
       if (testsResponse.success) {
         setAllTests(testsResponse.data);
       }
-      
+
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to connect to server');
@@ -189,11 +273,12 @@ const HomeScreen = () => {
   // Map program names to gradients and icons
   const getProgramGradient = (programName: string): [string, string] => {
     const name = programName.toLowerCase();
-    if (name.includes('nda')) return ["#f97316", "#ea580c"];
-    if (name.includes('ssp')) return ["#10b981", "#059669"];
-    if (name.includes('scholarship')) return ["#8b5cf6", "#7c3aed"];
-    return ["#6366f1", "#4f46e5"]; // default gradient
+    if (name.includes('nda')) return ["#019f8c", "#007b80"];
+    if (name.includes('ssp')) return ["#019f8c", "#007b80"];
+    if (name.includes('scholarship')) return ["#019f8c", "#007b80"];
+    return ["#019f8c", "#007b80"]; // default gradient
   };
+  // colors={['#019f8c', '#007b80']}
 
   const getProgramIcon = (programName: string): keyof typeof ICONS => {
     const name = programName.toLowerCase();
@@ -351,14 +436,26 @@ const HomeScreen = () => {
     };
 
     const handlePress = () => {
-      router.push({
-        pathname: '/program-tests',
-        params: {
-          programId: item.id,
-          programName: item.name,
-          programDescription: item.description,
-        },
-      });
+      if (item.type === 'test' && item.testData) {
+        // Navigate to test details or start test
+        router.push({
+          pathname: '/test-screen',
+          params: {
+            testId: item.testData.id.toString(),
+            testTitle: item.testData.title,
+          },
+        });
+      } else {
+        // Navigate to program tests
+        router.push({
+          pathname: '/program-tests',
+          params: {
+            programId: item.id,
+            programName: item.name,
+            programDescription: item.description,
+          },
+        });
+      }
     };
 
     return (
@@ -374,6 +471,8 @@ const HomeScreen = () => {
             {
               transform: [{ scale: scaleValue }],
               marginLeft: index === 0 ? 20 : 0,
+              width: cardWidth,
+              height: cardHeight,
             },
           ]}
         >
@@ -386,8 +485,12 @@ const HomeScreen = () => {
             <View style={styles.streamIconContainer}>
               <FontAwesome name={ICONS[item.icon]} size={28} color="#FFF" />
             </View>
-            <Text style={styles.streamText}>{item.name}</Text>
-            <Text style={styles.streamDescription}>{item.description}</Text>
+            <Text style={styles.streamText} numberOfLines={1} ellipsizeMode="tail">
+              {item.name}
+            </Text>
+            <Text style={styles.streamDescription} numberOfLines={2} ellipsizeMode="tail">
+              {item.description}
+            </Text>
             <View style={styles.courseCount}>
               <Text style={styles.courseCountText}>
                 {item.courses} {item.courses === 1 ? 'Test' : 'Tests'}
@@ -448,7 +551,7 @@ const HomeScreen = () => {
         <View style={styles.academyContent}>
           <Text style={styles.academyTitle}>{item.title}</Text>
           <Text style={styles.academyDescription}>{item.description}</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.academyButton}
             onPress={() => {
               setSelectedProgram(item.title);
@@ -478,7 +581,9 @@ const HomeScreen = () => {
             <FontAwesome name="user" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.profileTextContainer}>
-            <Text style={styles.userName}>Prasad Aswar</Text>
+            <Text style={styles.userName}>
+              {userData ? `${userData.first_name} ${userData.last_name}` : 'Welcome User'}
+            </Text>
             <Text style={styles.userStatus}>Premium Member</Text>
           </View>
         </View>
@@ -500,13 +605,21 @@ const HomeScreen = () => {
       >
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search courses, streams..."
-            placeholderTextColor={COLORS.muted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+          <View style={styles.searchInputContainer}>
+            <FontAwesome name="search" size={16} color={COLORS.muted} style={styles.searchInputIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search courses, streams, tests..."
+              placeholderTextColor={COLORS.muted}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity style={styles.clearButton} onPress={clearSearch}>
+                <FontAwesome name="times" size={16} color={COLORS.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
           <TouchableOpacity style={styles.searchButton}>
             <LinearGradient
               colors={[COLORS.primary, COLORS.secondary]}
@@ -517,36 +630,71 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Streams Section */}
+        {/* Streams Section - Show search results or available programs */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Available Programs</Text>
-            <TouchableOpacity onPress={fetchPrograms} style={styles.refreshButton}>
-              <MaterialIcons name="refresh" size={18} color={COLORS.primary} />
-            </TouchableOpacity>
-          </View>
-          
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Loading programs...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={fetchPrograms}>
-                <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.sectionTitle}>
+              {isSearching && searchQuery.length > 0
+                ? `Search Results (${searchResults.length})`
+                : 'Available Programs'
+              }
+            </Text>
+            {isSearching && searchQuery.length > 0 ? (
+              <TouchableOpacity onPress={clearSearch}>
+                <Text style={styles.seeAll}>Clear Search</Text>
               </TouchableOpacity>
-            </View>
+            ) : (
+              <TouchableOpacity onPress={fetchPrograms} style={styles.refreshButton}>
+                <MaterialIcons name="refresh" size={18} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {isSearching && searchQuery.length > 0 ? (
+            // Show search results
+            searchResults.length > 0 ? (
+              <FlatList
+                data={searchResults}
+                renderItem={renderStreamCard}
+                keyExtractor={item => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.streamList}
+              />
+            ) : (
+              // Show no results message
+              <View style={styles.noResultsContainer}>
+                <FontAwesome name="search" size={48} color={COLORS.muted} />
+                <Text style={styles.noResultsTitle}>No results found</Text>
+                <Text style={styles.noResultsSubtitle}>
+                  Try searching for different keywords or browse our programs below
+                </Text>
+              </View>
+            )
           ) : (
-            <FlatList
-              data={displayStreams}
-              renderItem={renderStreamCard}
-              keyExtractor={item => item.id}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.streamList}
-            />
+            // Show regular available programs
+            loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
+                <Text style={styles.loadingText}>Loading programs...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity style={styles.retryButton} onPress={fetchPrograms}>
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <FlatList
+                data={displayStreams}
+                renderItem={renderStreamCard}
+                keyExtractor={item => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.streamList}
+              />
+            )
           )}
         </View>
 
@@ -626,6 +774,9 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Bottom Safe Area */}
+        <View style={styles.bottomSafeArea} />
       </ScrollView>
     </>
   );
@@ -675,10 +826,10 @@ const HomeScreen = () => {
         // Close modal immediately on success
         setEnquiryModalVisible(false);
         setEnquiryForm({ name: '', mobile: '', email: '', message: '' });
-        
+
         // Show success message
         Alert.alert(
-          'Success!', 
+          'Success!',
           `Thank you for your enquiry about ${selectedProgram}. We'll get back to you soon!`,
           [{ text: 'OK' }]
         );
@@ -699,9 +850,9 @@ const HomeScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {renderContent()}
-      
+
       {/* Enquiry Modal */}
       <Modal
         visible={enquiryModalVisible}
@@ -717,7 +868,7 @@ const HomeScreen = () => {
                 <FontAwesome name="times" size={20} color={COLORS.muted} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Full Name *</Text>
@@ -725,56 +876,56 @@ const HomeScreen = () => {
                   style={styles.formInput}
                   placeholder="Enter your full name"
                   value={enquiryForm.name}
-                  onChangeText={(text) => setEnquiryForm({...enquiryForm, name: text})}
+                  onChangeText={(text) => setEnquiryForm({ ...enquiryForm, name: text })}
                 />
               </View>
-              
+
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Mobile Number *</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="Enter your mobile number"
                   value={enquiryForm.mobile}
-                  onChangeText={(text) => setEnquiryForm({...enquiryForm, mobile: text})}
+                  onChangeText={(text) => setEnquiryForm({ ...enquiryForm, mobile: text })}
                   keyboardType="phone-pad"
                 />
               </View>
-              
+
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Email Address</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="Enter your email address"
                   value={enquiryForm.email}
-                  onChangeText={(text) => setEnquiryForm({...enquiryForm, email: text})}
+                  onChangeText={(text) => setEnquiryForm({ ...enquiryForm, email: text })}
                   keyboardType="email-address"
                 />
               </View>
-              
+
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Message</Text>
                 <TextInput
                   style={[styles.formInput, styles.textArea]}
                   placeholder="Tell us more about your interest..."
                   value={enquiryForm.message}
-                  onChangeText={(text) => setEnquiryForm({...enquiryForm, message: text})}
+                  onChangeText={(text) => setEnquiryForm({ ...enquiryForm, message: text })}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
               </View>
             </ScrollView>
-            
+
             <View style={styles.modalFooter}>
-              <TouchableOpacity 
-                style={[styles.cancelButton, isSubmittingEnquiry && styles.disabledButton]} 
+              <TouchableOpacity
+                style={[styles.cancelButton, isSubmittingEnquiry && styles.disabledButton]}
                 onPress={closeEnquiryModal}
                 disabled={isSubmittingEnquiry}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.submitButton, isSubmittingEnquiry && styles.disabledButton]} 
+              <TouchableOpacity
+                style={[styles.submitButton, isSubmittingEnquiry && styles.disabledButton]}
                 onPress={handleEnquirySubmit}
                 disabled={isSubmittingEnquiry}
               >
@@ -791,12 +942,12 @@ const HomeScreen = () => {
           </View>
         </View>
       </Modal>
-      
-      <BottomNavigation 
-        activeTab={activeTab} 
-        onTabPress={handleTabPress} 
+
+      <BottomNavigation
+        activeTab={activeTab}
+        onTabPress={handleTabPress}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -808,15 +959,15 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     paddingTop: 16,
-    paddingBottom: 100,
+    paddingBottom: 100, // Increased from 80 to 100 to ensure content is fully visible
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 12,
-    paddingTop: 44,
+    paddingTop: 20, // Increased from 44 to 20 for proper mobile spacing
     zIndex: 10,
     backgroundColor: COLORS.card,
     borderBottomWidth: 1,
@@ -885,19 +1036,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 20,
-    marginTop: 100,
+    marginTop: 80, // Reduced from 100 to 80 to account for smaller header
     marginBottom: 24,
     position: 'relative',
   },
-  searchInput: {
-    flex: 1,
-    height: 48,
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.card,
     borderRadius: 24,
-    paddingHorizontal: 20,
-    color: COLORS.text,
-    fontSize: 15,
-    fontWeight: "500",
+    paddingHorizontal: 16,
+    flex: 1,
     borderWidth: 1,
     borderColor: COLORS.border,
     shadowColor: "#000",
@@ -905,6 +1054,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: "500",
+    paddingVertical: 0, // Remove default padding
+  },
+  searchInputIcon: {
+    marginRight: 12,
+  },
+  clearButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.light,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+    height: 32,
   },
   searchButton: {
     position: "absolute",
@@ -924,7 +1093,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     marginBottom: 20,
   },
   sectionTitle: {
@@ -944,12 +1113,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   streamList: {
-    paddingLeft: 20,
-    paddingRight: 8,
+    paddingLeft: 0,
+    paddingRight: 0,
+    gap: 6,
   },
   streamCard: {
     width: 160,
-    height: 180,
+    height: 200,
     borderRadius: 20,
     marginRight: 16,
     overflow: "hidden",
@@ -958,11 +1128,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
+    minWidth: 140,
+    maxWidth: 180,
   },
   streamGradient: {
     flex: 1,
     padding: 16,
     justifyContent: "space-between",
+    alignItems: "stretch",
   },
   streamIconContainer: {
     width: 48,
@@ -972,18 +1145,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'flex-start',
+    marginBottom: 12,
   },
   streamText: {
     color: "#FFF",
     fontSize: 18,
     fontWeight: "700",
-    marginTop: 12,
+    marginBottom: 8,
+    textAlign: 'left',
+    flexShrink: 1,
   },
   streamDescription: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 12,
-    marginTop: 4,
+    marginBottom: 12,
     lineHeight: 16,
+    textAlign: 'left',
+    flexShrink: 1,
+    flex: 1,
   },
   courseCount: {
     backgroundColor: 'rgba(0,0,0,0.2)',
@@ -1179,7 +1358,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-  
+
   // Loading and Error states
   loadingContainer: {
     flexDirection: 'row',
@@ -1228,6 +1407,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '##019f8c',
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -1391,6 +1572,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  bottomSafeArea: {
+    height: 100, // Increased from 80 to 100 to ensure content is fully visible above navigation
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  noResultsTitle: {
+    color: COLORS.muted,
+    fontSize: 18,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  noResultsSubtitle: {
+    color: COLORS.muted,
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

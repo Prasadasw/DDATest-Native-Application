@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -11,15 +11,15 @@ interface BottomNavigationProps {
 
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPress }) => {
   const tabs = [
-    { key: 'home', label: 'Home', icon: '🏠' },
-    { key: 'education', label: 'Education', icon: '📚' },
-    { key: 'profile', label: 'Profile', icon: '👤' },
+    { key: 'home', label: 'Home', icon: require('../assets/icons/home.png') },
+    { key: 'education', label: 'Education', icon: require('../assets/icons/reading.png') },
+    { key: 'profile', label: 'Profile', icon: require('../assets/icons/user.png') },
   ];
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.98)']}
+        colors={['#013fc4', '#000046']}
         style={styles.gradient}
       >
         {tabs.map((tab) => (
@@ -32,16 +32,11 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPre
             onPress={() => onTabPress(tab.key as 'home' | 'education' | 'profile')}
             activeOpacity={0.7}
           >
-            <View style={[
-              styles.iconContainer,
-              activeTab === tab.key && styles.activeIconContainer
-            ]}>
-              <Text style={[
-                styles.icon,
-                activeTab === tab.key && styles.activeIcon
-              ]}>
-                {tab.icon}
-              </Text>
+            <View style={[styles.iconContainer, activeTab === tab.key && styles.activeIconContainer]}>
+              <Image
+                source={tab.icon}
+                style={[styles.icon, activeTab === tab.key && styles.activeIcon]}
+              />
             </View>
             <Text style={[
               styles.label,
@@ -68,9 +63,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 6, // Reduced from 8 to 6
     paddingHorizontal: 20,
-    paddingBottom: 30, // Extra padding for safe area
+    paddingBottom: 16, // Reduced from 20 to 16
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     shadowColor: '#000',
@@ -83,44 +78,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 4, // Reduced from 6 to 4
   },
   activeTab: {
     transform: [{ scale: 1.05 }],
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32, // Reduced from 36 to 32
+    height: 32, // Reduced from 36 to 32
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-    backgroundColor: 'rgba(1, 63, 196, 0.1)',
+    marginBottom: 2, // Reduced from 3 to 2
   },
   activeIconContainer: {
-    backgroundColor: '#013fc4',
-    shadowColor: '#013fc4',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#ffffff',
+    // shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   icon: {
-    fontSize: 18,
-    opacity: 0.7,
+    width: 24, // Adjusted size for PNG icons
+    height: 24, // Adjusted size for PNG icons
+    tintColor: 'rgba(255, 255, 255, 0.7)',
   },
   activeIcon: {
-    opacity: 1,
-    color: '#fff',
+    tintColor: '#ffffff', // Full white for active state
   },
   label: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(0,0,0,0.6)',
-    textAlign: 'center',
+    color: '#ffffff', // Changed to white for visibility on dark background
+    marginTop: 2,
   },
   activeLabel: {
-    color: '#013fc4',
+    color: '#ffffff', // Changed to white for visibility on dark background
     fontWeight: '600',
   },
 });

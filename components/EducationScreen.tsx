@@ -116,13 +116,23 @@ const EducationScreen: React.FC = () => {
   };
 
   // Color schemes for test cards
-  const cardColors = [
-    { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'palette' },
-    { primary: 'rgb(56, 239, 125)', secondary: 'rgb(34, 197, 94)', icon: 'group' },
-    { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'mic' },
-    { primary: 'rgb(56, 239, 125)', secondary: 'rgb(34, 197, 94)', icon: 'code' },
-    { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'psychology' },
-  ];
+  // const cardColors = [
+  //   { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'palette' },
+  //   { primary: 'rgb(56, 239, 125)', secondary: 'rgb(34, 197, 94)', icon: 'group' },
+  //   { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'mic' },
+  //   { primary: 'rgb(56, 239, 125)', secondary: 'rgb(34, 197, 94)', icon: 'code' },
+  //   { primary: '#8b5cf6', secondary: '#7c3aed', icon: 'psychology' },
+  // ];
+    // Color schemes for test cards
+    // colors={['#019f8c', '#007b80']}
+
+    const cardColors = [
+      { primary: '#019f8c', secondary: '#007b80', icon: 'palette' },
+      { primary: '#019f8c', secondary: '#007b80', icon: 'group' },
+      { primary: '#019f8c', secondary: '#007b80', icon: 'mic' },
+      { primary: '#019f8c', secondary: '#007b80', icon: 'code' },
+      { primary: '#019f8c', secondary: '#007b80', icon: 'psychology' },
+    ];
 
   if (loading) {
     return (
@@ -203,7 +213,7 @@ const EducationScreen: React.FC = () => {
                       {/* Text Content */}
                       <View style={styles.testTextContainer}>
                         <Text style={styles.testName}>{program.name}</Text>
-                        <Text style={styles.testCount}>{program.test_count || 0} Tests</Text>
+                        {/* <Text style={styles.testCount}>{program.test_count || 0} Tests</Text> */}
                       </View>
                       
                       {/* Action Button */}
@@ -231,12 +241,12 @@ const EducationScreen: React.FC = () => {
             onPress={() => handleBannerPress('Scholarship Enrollment')}
           >
             <LinearGradient
-              colors={['#ec4899', '#be185d']}
+              colors={['#019f8c', '#007b80']}
               style={styles.bannerGradient}
             >
               <View style={styles.bannerContent}>
                 <View style={styles.bannerIconContainer}>
-                  <MaterialIcons name="school" size={24} color="#ec4899" />
+                  <MaterialIcons name="school" size={24} color="#007b80" />
                 </View>
                 <View style={styles.bannerTextContainer}>
                   <Text style={styles.bannerTitle}>Scholarship Enrollment</Text>
@@ -253,12 +263,12 @@ const EducationScreen: React.FC = () => {
             onPress={() => handleBannerPress('NDA Training')}
           >
             <LinearGradient
-              colors={['#8b5cf6', '#7c3aed']}
+               colors={['#019f8c', '#007b80']}
               style={styles.bannerGradient}
             >
               <View style={styles.bannerContent}>
                 <View style={styles.bannerIconContainer}>
-                  <MaterialIcons name="security" size={24} color="#8b5cf6" />
+                  <MaterialIcons name="security" size={24} color="#007b80" />
                 </View>
                 <View style={styles.bannerTextContainer}>
                   <Text style={styles.bannerTitle}>NDA Training</Text>
@@ -275,12 +285,12 @@ const EducationScreen: React.FC = () => {
             onPress={() => handleBannerPress('Training Services')}
            >
             <LinearGradient
-              colors={['#f59e0b', '#d97706']}
+            colors={['#019f8c', '#007b80']}
               style={styles.bannerGradient}
             >
               <View style={styles.bannerContent}>
                 <View style={styles.bannerIconContainer}>
-                  <MaterialIcons name="psychology" size={24} color="#f59e0b" />
+                  <MaterialIcons name="psychology" size={24} color="#007b80" />
                 </View>
                 <View style={styles.bannerTextContainer}>
                   <Text style={styles.bannerTitle}>Training Services</Text>
@@ -289,28 +299,6 @@ const EducationScreen: React.FC = () => {
                 <MaterialIcons name="arrow-forward-ios" size={20} color="#fff" />
               </View>
             </LinearGradient>
-          </TouchableOpacity>
-
-
-          <TouchableOpacity 
-            style={styles.serviceBanner}
-            // onPress={() => handleBannerPress('Training Services')}
-           >
-            {/* <LinearGradient
-              colors={['#f59e0b', '#d97706']}
-              style={styles.bannerGradient}
-            > */}
-              <View style={styles.bannerContent}>
-                <View style={styles.bannerIconContainer}>
-                  <MaterialIcons name="psychology" size={24} color="#f59e0b" />
-                </View>
-                <View style={styles.bannerTextContainer}>
-                  <Text style={styles.bannerTitle}></Text>
-                  <Text style={styles.bannerSubtitle}></Text>
-                </View>
-                <MaterialIcons name="arrow-forward-ios" size={20} color="#fff" />
-              </View>
-            {/* </LinearGradient> */}
           </TouchableOpacity>
         </View>
 
@@ -415,13 +403,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+    paddingTop: 5, // Add small top padding for mobile devices
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingTop: 20, // Increased from 10 to 20 for proper mobile spacing
     paddingBottom: 15,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
@@ -451,6 +440,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingBottom: 100, // Increased from 80 to 100 to ensure content is fully visible above navigation
   },
   scrollContent: {
     paddingBottom: 20,
@@ -641,7 +631,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomSpacing: {
-    height: 20,
+    height: 100, // Increased from 20 to 100 to ensure content is fully visible above navigation
   },
   // Modal styles
   modalOverlay: {

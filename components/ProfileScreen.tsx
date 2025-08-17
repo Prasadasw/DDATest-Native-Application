@@ -210,7 +210,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#013fc4', '#000046']}
+        colors={['#019f8c', '#007b80']}
         style={styles.header}
       >
         <View style={styles.profileSection}>
@@ -511,6 +511,9 @@ const ProfileScreen: React.FC = () => {
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Bottom Safe Area */}
+        <View style={styles.bottomSafeArea} />
       </ScrollView>
 
       {/* Help Center Modal */}
@@ -620,13 +623,14 @@ const styles = StyleSheet.create({
   },
   profileStatus: {
     fontSize: 12,
-    color: '#38EF7D',
+    color: '#d3af27',
     fontWeight: '600',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+    paddingBottom: 100, // Increased from 80 to 100 to ensure content is fully visible above navigation
   },
   section: {
     marginBottom: 30,
@@ -973,6 +977,9 @@ const styles = StyleSheet.create({
     color: '#013fc4',
     fontWeight: '500',
     fontStyle: 'italic',
+  },
+  bottomSafeArea: {
+    height: 100, // Adjust as needed for safe area
   },
 });
 

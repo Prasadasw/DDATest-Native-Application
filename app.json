@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "test-app",
-    "slug": "test-app",
+    "name": "mind scale test portal",
+    "slug": "mind-scale-test-portal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.ashwinitiwalkar13.mindscaletestportal"
     },
     "web": {
       "bundler": "metro",
@@ -41,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "08bf2a31-5930-4934-b21b-f5ed78df9096"
+      }
     }
   }
 }
