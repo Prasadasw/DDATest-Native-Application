@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import BottomNavigation from "../../components/BottomNavigation";
 import EducationScreen from "../../components/EducationScreen";
+import LeaderboardScreen from "../../components/LeaderboardScreen";
 import ProfileScreen from "../../components/ProfileScreen";
 import { apiService, Program, Test } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
@@ -110,7 +111,7 @@ interface AcademyCard {
 
 const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<'home' | 'education' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'education' | 'leaderboard' | 'profile'>('home');
   const [programs, setPrograms] = useState<Program[]>([]);
   const [allTests, setAllTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
@@ -787,6 +788,8 @@ const HomeScreen = () => {
         return renderHomeContent();
       case 'education':
         return <EducationScreen />;
+      case 'leaderboard':
+        return <LeaderboardScreen />;
       case 'profile':
         return <ProfileScreen />;
       default:
@@ -794,7 +797,7 @@ const HomeScreen = () => {
     }
   };
 
-  const handleTabPress = (tab: 'home' | 'education' | 'profile') => {
+  const handleTabPress = (tab: 'home' | 'education' | 'leaderboard' | 'profile') => {
     setActiveTab(tab);
   };
 

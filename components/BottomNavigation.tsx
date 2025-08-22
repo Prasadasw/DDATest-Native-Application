@@ -5,14 +5,15 @@ import { Dimensions, StyleSheet, Text, TouchableOpacity, View, Image } from 'rea
 const { width } = Dimensions.get('window');
 
 interface BottomNavigationProps {
-  activeTab: 'home' | 'education' | 'profile';
-  onTabPress: (tab: 'home' | 'education' | 'profile') => void;
+  activeTab: 'home' | 'education' | 'leaderboard' | 'profile';
+  onTabPress: (tab: 'home' | 'education' | 'leaderboard' | 'profile') => void;
 }
 
 const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPress }) => {
   const tabs = [
     { key: 'home', label: 'Home', icon: require('../assets/icons/home.png') },
     { key: 'education', label: 'Education', icon: require('../assets/icons/reading.png') },
+    { key: 'leaderboard', label: 'Leaderboard', icon: require('../assets/icons/test.png') },
     { key: 'profile', label: 'Profile', icon: require('../assets/icons/user.png') },
   ];
 
@@ -29,7 +30,7 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab, onTabPre
               styles.tab,
               activeTab === tab.key && styles.activeTab
             ]}
-            onPress={() => onTabPress(tab.key as 'home' | 'education' | 'profile')}
+            onPress={() => onTabPress(tab.key as 'home' | 'education' | 'leaderboard' | 'profile')}
             activeOpacity={0.7}
           >
             <View style={[styles.iconContainer, activeTab === tab.key && styles.activeIconContainer]}>
