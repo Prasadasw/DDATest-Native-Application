@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   // For development (when running on localhost)
-  BASE_URL: 'https://appapi.ddabattalion.com/api',
+  BASE_URL: 'https://api.ddabattalion.com/api',
   
   // For production (replace with your actual production URL)
   // BASE_URL: 'https://your-production-domain.com/api',

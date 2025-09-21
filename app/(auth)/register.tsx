@@ -90,7 +90,7 @@ export default function RegisterScreen() {
         qualification,
       };
 
-      const response = await fetch('https://appapi.ddabattalion.com/api/students/register/', {
+      const response = await fetch('https://api.ddabattalion.com/api/students/register/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

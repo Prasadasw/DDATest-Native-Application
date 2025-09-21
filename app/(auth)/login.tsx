@@ -1,17 +1,17 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ImageBackground,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
@@ -47,7 +47,7 @@ export default function LoginScreen() {
         password,
       };
 
-      const response = await fetch('https://appapi.ddabattalion.com/api/students/login/', {
+      const response = await fetch('https://api.ddabattalion.com/api/students/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
