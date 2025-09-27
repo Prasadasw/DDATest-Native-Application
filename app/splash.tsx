@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect } from 'react';
+import { Dimensions, Image, StyleSheet, View } from 'react-native';
+import { hasUserSeenIntro } from '../utils/introUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -10,16 +11,36 @@ SplashScreen.preventAutoHideAsync();
 
 export default function SplashScreenComponent() {
   useEffect(() => {
-    // Hide the native splash screen
-    SplashScreen.hideAsync();
-    
-    // Show splash for 2 seconds then navigate to main app
-    const timer = setTimeout(() => {
-      router.replace('/(auth)/login');
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    initializeApp();
   }, []);
+
+  const initializeApp = async () => {
+    try {
+      // Hide the native splash screen
+      await SplashScreen.hideAsync();
+      
+      // Check if user has seen the intro
+      const hasSeenIntro = await hasUserSeenIntro();
+      
+      // Show splash for 2 seconds then navigate
+      setTimeout(() => {
+        if (hasSeenIntro) {
+          // User has seen intro, go directly to login
+          router.replace('/(auth)/login');
+        } else {
+          // First time user, show intro screens
+          router.replace('/intro');
+        }
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      // Fallback to login screen
+      setTimeout(() => {
+        router.replace('/(auth)/login');
+      }, 2000);
+    }
+  };
 
   return (
     <View style={styles.container}>

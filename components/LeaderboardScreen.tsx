@@ -288,7 +288,7 @@ const LeaderboardScreen: React.FC = () => {
         <TouchableOpacity style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>🏆 Leaderboard</Text>
+        <Text style={styles.headerTitle}>🏆 Leaderboard </Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -380,13 +380,13 @@ const LeaderboardScreen: React.FC = () => {
 
         {/* Call to Action */}
         <View style={styles.ctaContainer}>
-          <Text style={styles.ctaTitle}>Ready to join the competition? 🚀</Text>
+          {/* <Text style={styles.ctaTitle}>Ready to join the competition? 🚀</Text>
           <Text style={styles.ctaSubtitle}>
             Take tests, improve your skills, and climb the leaderboard!
           </Text>
           <TouchableOpacity style={styles.ctaButton}>
             <Text style={styles.ctaButtonText}>Start Learning Now</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -402,6 +402,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    marginTop: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

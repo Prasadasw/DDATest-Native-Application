@@ -160,7 +160,7 @@ const EducationScreen: React.FC = () => {
       {/* Compact Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Education</Text>
+          <Text style={styles.headerTitle}>Education </Text>
           <Text style={styles.headerSubtitle}>Discover learning opportunities</Text>
         </View>
         <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
@@ -406,6 +406,7 @@ const styles = StyleSheet.create({
     paddingTop: 5, // Add small top padding for mobile devices
   },
   header: {
+    marginTop: 27,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

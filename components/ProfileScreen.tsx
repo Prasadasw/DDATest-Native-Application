@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, Modal } from 'react-native';
+import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { API_CONFIG, API_ENDPOINTS } from '../constants/ApiConfig';
-import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
+import { resetIntroForTesting } from '../utils/introUtils';
 
 interface UserData {
   id: number;
@@ -62,6 +63,13 @@ const ProfileScreen: React.FC = () => {
   const [testResultsLoading, setTestResultsLoading] = useState(false);
   const [completedTestsLoading, setCompletedTestsLoading] = useState(false);
   const [helpModalVisible, setHelpModalVisible] = useState(false);
+  const [certificationModalVisible, setCertificationModalVisible] = useState(false);
+  const [certificationForm, setCertificationForm] = useState({
+    name: '',
+    email: '',
+    mobile: '',
+    selectedTests: [] as string[]
+  });
 
   useEffect(() => {
     if (token) {
@@ -177,6 +185,80 @@ const ProfileScreen: React.FC = () => {
       console.error('Date formatting error:', error);
       return 'Invalid date';
     }
+  };
+
+  // Check if student has released test results
+  const hasReleasedResults = () => {
+    // Check test results
+    const hasReleasedTestResults = testResults.some(result => result.status === 'released');
+    
+    // Check completed tests
+    const hasReleasedCompletedTests = completedTests.some(studentData => 
+      studentData.completed_tests.some(test => test.status === 'result_released')
+    );
+    
+    return hasReleasedTestResults || hasReleasedCompletedTests;
+  };
+
+  // Get released test names for certification
+  const getReleasedTestNames = () => {
+    const releasedTests: string[] = [];
+    
+    // From test results
+    testResults.forEach(result => {
+      if (result.status === 'released') {
+        releasedTests.push(result.test_title);
+      }
+    });
+    
+    // From completed tests
+    completedTests.forEach(studentData => {
+      studentData.completed_tests.forEach(test => {
+        if (test.status === 'result_released') {
+          releasedTests.push(test.test_title);
+        }
+      });
+    });
+    
+    return [...new Set(releasedTests)]; // Remove duplicates
+  };
+
+  const handleCertificationSubmit = () => {
+    if (!certificationForm.name.trim() || !certificationForm.email.trim() || !certificationForm.mobile.trim()) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    if (certificationForm.selectedTests.length === 0) {
+      Alert.alert('Error', 'Please select at least one test for certification');
+      return;
+    }
+
+    // Here you would typically send the certification request to the backend
+    console.log('Certification application:', certificationForm);
+    
+    Alert.alert(
+      'Application Submitted! 🎉',
+      'Your certification application has been submitted successfully. You will be contacted within 2-3 business days.',
+      [{ text: 'OK', onPress: () => setCertificationModalVisible(false) }]
+    );
+
+    // Reset form
+    setCertificationForm({
+      name: '',
+      email: '',
+      mobile: '',
+      selectedTests: []
+    });
+  };
+
+  const toggleTestSelection = (testName: string) => {
+    setCertificationForm(prev => ({
+      ...prev,
+      selectedTests: prev.selectedTests.includes(testName)
+        ? prev.selectedTests.filter(test => test !== testName)
+        : [...prev.selectedTests, testName]
+    }));
   };
 
   if (loading) {
@@ -360,79 +442,123 @@ const ProfileScreen: React.FC = () => {
             <View style={styles.testResultsCard}>
               <Text style={styles.testResultsTitle}>Loading Completed Tests...</Text>
             </View>
-          ) : completedTests.length > 0 ? (
-            completedTests.map((studentData, index) => (
-              <View key={index} style={styles.completedTestsCard}>
-                <View style={styles.completedTestsHeader}>
-                  <Text style={styles.completedTestsTitle}>
-                    {studentData.student.first_name} {studentData.student.last_name}
-                  </Text>
-                  <Text style={styles.completedTestsSubtitle}>
-                    {studentData.completed_tests.length} tests completed
+          ) : (() => {
+            // Filter to show only current student's completed tests
+            const currentStudentTests = completedTests.find(studentData => 
+              studentData.student.id === studentId
+            );
+            
+            if (currentStudentTests && currentStudentTests.completed_tests.length > 0) {
+              return (
+                <View style={styles.completedTestsCard}>
+                  <View style={styles.completedTestsHeader}>
+                    <Text style={styles.completedTestsTitle}>
+                      My Completed Tests
+                    </Text>
+                    <Text style={styles.completedTestsSubtitle}>
+                      {currentStudentTests.completed_tests.length} tests completed
+                    </Text>
+                  </View>
+                  
+                  {currentStudentTests.completed_tests.map((test) => (
+                    <View key={test.submission_id} style={styles.completedTestItem}>
+                      <View style={styles.completedTestHeader}>
+                        <Text style={styles.completedTestTitle}>{test.test_title}</Text>
+                        <Text style={[
+                          styles.completedTestStatus,
+                          { 
+                            color: test.status === 'result_released' ? '#38EF7D' : 
+                                   test.status === 'under_review' ? '#FFD166' : '#FF6B6B'
+                          }
+                        ]}>
+                          {test.status === 'result_released' ? '✅ Released' : 
+                           test.status === 'under_review' ? '⏳ Reviewing' : '📝 Submitted'}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.completedTestStats}>
+                        <View style={styles.completedTestStat}>
+                          <Text style={styles.completedTestStatLabel}>Score</Text>
+                          <Text style={styles.completedTestStatValue}>
+                            {test.total_score || 0}/{test.max_score}
+                          </Text>
+                        </View>
+                        <View style={styles.completedTestStat}>
+                          <Text style={styles.completedTestStatLabel}>Percentage</Text>
+                          <Text style={styles.completedTestStatValue}>
+                            {test.percentage ? `${test.percentage}%` : 'N/A'}
+                          </Text>
+                        </View>
+                        <View style={styles.completedTestStat}>
+                          <Text style={styles.completedTestStatLabel}>Time</Text>
+                          <Text style={styles.completedTestStatValue}>
+                            {test.time_taken ? `${test.time_taken} min` : 'N/A'}
+                          </Text>
+                        </View>
+                        <View style={styles.completedTestStat}>
+                          <Text style={styles.completedTestStatLabel}>Date</Text>
+                          <Text style={styles.completedTestStatValue}>
+                            {formatDate(test.submitted_at)}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {test.program_name && (
+                        <Text style={styles.completedTestProgram}>
+                          📚 {test.program_name}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              );
+            } else {
+              return (
+                <View style={styles.testResultsCard}>
+                  <Text style={styles.testResultsTitle}>No Completed Tests Found</Text>
+                  <Text style={styles.testResultsSubtitle}>
+                    Your completed tests will appear here once you finish taking tests
                   </Text>
                 </View>
-                
-                {studentData.completed_tests.map((test) => (
-                  <View key={test.submission_id} style={styles.completedTestItem}>
-                    <View style={styles.completedTestHeader}>
-                      <Text style={styles.completedTestTitle}>{test.test_title}</Text>
-                      <Text style={[
-                        styles.completedTestStatus,
-                        { 
-                          color: test.status === 'result_released' ? '#38EF7D' : 
-                                 test.status === 'under_review' ? '#FFD166' : '#FF6B6B'
-                        }
-                      ]}>
-                        {test.status === 'result_released' ? '✅ Released' : 
-                         test.status === 'under_review' ? '⏳ Reviewing' : '📝 Submitted'}
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.completedTestStats}>
-                      <View style={styles.completedTestStat}>
-                        <Text style={styles.completedTestStatLabel}>Score</Text>
-                        <Text style={styles.completedTestStatValue}>
-                          {test.total_score || 0}/{test.max_score}
-                        </Text>
-                      </View>
-                      <View style={styles.completedTestStat}>
-                        <Text style={styles.completedTestStatLabel}>Percentage</Text>
-                        <Text style={styles.completedTestStatValue}>
-                          {test.percentage ? `${test.percentage}%` : 'N/A'}
-                        </Text>
-                      </View>
-                      <View style={styles.completedTestStat}>
-                        <Text style={styles.completedTestStatLabel}>Time</Text>
-                        <Text style={styles.completedTestStatValue}>
-                          {test.time_taken ? `${test.time_taken} min` : 'N/A'}
-                        </Text>
-                      </View>
-                      <View style={styles.completedTestStat}>
-                        <Text style={styles.completedTestStatLabel}>Date</Text>
-                        <Text style={styles.completedTestStatValue}>
-                          {formatDate(test.submitted_at)}
-                        </Text>
-                      </View>
-                    </View>
-                    
-                    {test.program_name && (
-                      <Text style={styles.completedTestProgram}>
-                        📚 {test.program_name}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            ))
-          ) : (
-            <View style={styles.testResultsCard}>
-              <Text style={styles.testResultsTitle}>No Completed Tests Found</Text>
-              <Text style={styles.testResultsSubtitle}>
-                Completed tests data will appear here once available
-              </Text>
-            </View>
-          )}
+              );
+            }
+          })()}
         </View>
+
+        {/* Apply for Certification Section - Only show if student has released results */}
+        {hasReleasedResults() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Certification</Text>
+            
+            <TouchableOpacity 
+              style={styles.certificationCard}
+              onPress={() => {
+                // Pre-fill form with user data
+                setCertificationForm(prev => ({
+                  ...prev,
+                  name: userData ? `${userData.first_name} ${userData.last_name}` : '',
+                  email: userData?.mobile ? `+91${userData.mobile}@example.com` : '',
+                  mobile: userData?.mobile ? `+91 ${userData.mobile}` : ''
+                }));
+                setCertificationModalVisible(true);
+              }}
+            >
+              <View style={styles.certificationIcon}>
+                <Text style={styles.certificationIconText}>🏆</Text>
+              </View>
+              <View style={styles.certificationContent}>
+                <Text style={styles.certificationTitle}>Apply for Certification</Text>
+                <Text style={styles.certificationSubtitle}>
+                  Get certified for your completed tests
+                </Text>
+                <Text style={styles.certificationDescription}>
+                  You have {getReleasedTestNames().length} test(s) eligible for certification
+                </Text>
+              </View>
+              <Text style={styles.certificationArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account Settings</Text>
@@ -463,6 +589,37 @@ const ProfileScreen: React.FC = () => {
             </View>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+          
+          {/* Development Only - Reset Intro */}
+          {/* {__DEV__ && (
+            <TouchableOpacity 
+              style={[styles.menuItem, { backgroundColor: '#fff3cd' }]} 
+              onPress={async () => {
+                Alert.alert(
+                  'Reset Intro',
+                  'This will reset the intro screens so they show again on next app launch. This is for development testing only.',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Reset', 
+                      style: 'destructive',
+                      onPress: async () => {
+                        await resetIntroForTesting();
+                        Alert.alert('Success', 'Intro has been reset! Restart the app to see intro screens again.');
+                      }
+                    }
+                  ]
+                );
+              }}
+            >
+              <Text style={styles.menuIcon}>🔄</Text>
+              <View style={styles.menuContent}>
+                <Text style={[styles.menuTitle, { color: '#856404' }]}>Reset Intro (Dev Only)</Text>
+                <Text style={[styles.menuSubtitle, { color: '#856404' }]}>Reset intro screens for testing</Text>
+              </View>
+              <Text style={[styles.menuArrow, { color: '#856404' }]}>›</Text>
+            </TouchableOpacity>
+          )} */}
         </View>
         
         {/* <View style={styles.section}>
@@ -515,6 +672,101 @@ const ProfileScreen: React.FC = () => {
         {/* Bottom Safe Area */}
         <View style={styles.bottomSafeArea} />
       </ScrollView>
+
+      {/* Certification Application Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={certificationModalVisible}
+        onRequestClose={() => setCertificationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Apply for Certification</Text>
+              <TouchableOpacity 
+                onPress={() => setCertificationModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.modalBody}>
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Full Name *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={certificationForm.name}
+                  onChangeText={(text) => setCertificationForm(prev => ({ ...prev, name: text }))}
+                  placeholder="Enter your full name"
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Email Address *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={certificationForm.email}
+                  onChangeText={(text) => setCertificationForm(prev => ({ ...prev, email: text }))}
+                  placeholder="Enter your email address"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Mobile Number *</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={certificationForm.mobile}
+                  onChangeText={(text) => setCertificationForm(prev => ({ ...prev, mobile: text }))}
+                  placeholder="Enter your mobile number"
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.formSection}>
+                <Text style={styles.formLabel}>Select Tests for Certification *</Text>
+                <Text style={styles.formSubLabel}>Choose the tests you want to get certified for:</Text>
+                {getReleasedTestNames().map((testName, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.testOption,
+                      certificationForm.selectedTests.includes(testName) && styles.testOptionSelected
+                    ]}
+                    onPress={() => toggleTestSelection(testName)}
+                  >
+                    <Text style={[
+                      styles.testOptionText,
+                      certificationForm.selectedTests.includes(testName) && styles.testOptionTextSelected
+                    ]}>
+                      {certificationForm.selectedTests.includes(testName) ? '✓' : '○'} {testName}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setCertificationModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.submitButton}
+                onPress={handleCertificationSubmit}
+              >
+                <Text style={styles.submitButtonText}>Submit Application</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Help Center Modal */}
       <Modal
@@ -980,6 +1232,139 @@ const styles = StyleSheet.create({
   },
   bottomSafeArea: {
     height: 100, // Adjust as needed for safe area
+  },
+  // Certification styles
+  certificationCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FFD700',
+  },
+  certificationIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#FFF8DC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  certificationIconText: {
+    fontSize: 24,
+  },
+  certificationContent: {
+    flex: 1,
+  },
+  certificationTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  certificationSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  certificationDescription: {
+    fontSize: 12,
+    color: '#013fc4',
+    fontWeight: '600',
+  },
+  certificationArrow: {
+    fontSize: 24,
+    color: '#ccc',
+    fontWeight: '300',
+  },
+  // Form styles
+  formSection: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  formSubLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  testOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  testOptionSelected: {
+    backgroundColor: '#e3f2fd',
+    borderColor: '#013fc4',
+  },
+  testOptionText: {
+    fontSize: 14,
+    color: '#1a1a1a',
+    marginLeft: 8,
+  },
+  testOptionTextSelected: {
+    color: '#013fc4',
+    fontWeight: '600',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginRight: 10,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '600',
+  },
+  submitButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#013fc4',
+    marginLeft: 10,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 

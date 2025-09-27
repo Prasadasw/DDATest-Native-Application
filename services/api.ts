@@ -144,11 +144,26 @@ class ApiService {
   }
 
   async checkTestAccess(testId: number, token: string): Promise<ApiResponse<any>> {
-    return this.makeRequest<ApiResponse<any>>(`${API_ENDPOINTS.ENROLLMENT_CHECK_ACCESS}/${testId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    try {
+      return await this.makeRequest<ApiResponse<any>>(`${API_ENDPOINTS.ENROLLMENT_CHECK_ACCESS}/${testId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      // Handle 403 as expected response for users without access
+      if (error instanceof Error && error.message.includes('403')) {
+        console.log(`ℹ️ User does not have access to test ${testId} - this is expected for new users`);
+        return {
+          success: false,
+          message: "You do not have access to this test. Please request enrollment first.",
+          has_access: false,
+          data: { has_access: false }
+        };
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   // Question API methods

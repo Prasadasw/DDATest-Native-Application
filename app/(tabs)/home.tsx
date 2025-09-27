@@ -585,7 +585,7 @@ const HomeScreen = () => {
             <Text style={styles.userName}>
               {userData ? `${userData.first_name} ${userData.last_name}` : 'Welcome User'}
             </Text>
-            <Text style={styles.userStatus}>Premium Member</Text>
+            <Text style={styles.userStatus}>Premium Student</Text>
           </View>
         </View>
 
@@ -990,6 +990,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   profileImageContainer: {
+    marginTop: 27,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -1002,8 +1003,12 @@ const styles = StyleSheet.create({
   },
   profileTextContainer: {
     flex: 1,
+    marginTop: 27,
+
+    
   },
   userName: {
+
     color: COLORS.text,
     fontSize: 15,
     fontWeight: "600",
@@ -1044,6 +1049,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   searchInputContainer: {
+    marginTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.card,
@@ -1079,6 +1085,7 @@ const styles = StyleSheet.create({
     height: 32,
   },
   searchButton: {
+    marginTop: 10,
     position: "absolute",
     right: 4,
   },

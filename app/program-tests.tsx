@@ -121,8 +121,14 @@ const ProgramTestsScreen = () => {
           }
         }
       } catch (error) {
-        console.log(`ℹ️ No access for test ${test.id}`);
-        newStatuses.set(test.id, 'none');
+        // Handle 403 as expected behavior for new users without access
+        if (error instanceof Error && error.message.includes('403')) {
+          console.log(`ℹ️ No access for test ${test.id} - user needs to enroll`);
+          newStatuses.set(test.id, 'none');
+        } else {
+          console.log(`ℹ️ Error checking access for test ${test.id}:`, error);
+          newStatuses.set(test.id, 'none');
+        }
       }
     }
     

@@ -4,20 +4,36 @@
     "slug": "mind-scale-test-portal",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "testapp",
+    "icon": "./assets/logo/LOGO.png",
+    "scheme": "ddatest",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "description": "Prepare for NDA, SSP, and scholarship tests with confidence. Your journey to defense excellence starts here.",
+    "keywords": [
+      "NDA",
+      "SSP",
+      "Defense",
+      "Test",
+      "Preparation",
+      "Scholarship",
+      "Education"
+    ],
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logo/LOGO.png",
+        "backgroundColor": "#0a7ea4"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ashwinitiwalkar13.mindscaletestportal"
+      "package": "com.mindscale.testportal",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ],
+      "icon": "./assets/logo/LOGO.png"
     },
     "web": {
       "bundler": "metro",
@@ -46,8 +62,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "08bf2a31-5930-4934-b21b-f5ed78df9096"
+        "projectId": "2d5cc41b-e1b3-4196-a278-9dc813eeedb7"
       }
-    }
+    },
+    "owner": "dev_prasad"
   }
 }
