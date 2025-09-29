@@ -256,16 +256,22 @@ const HomeScreen = () => {
       if (programsResponse.success) {
         setPrograms(programsResponse.data);
       } else {
-        setError('Failed to fetch programs');
+        // Handle API errors gracefully without crashing
+        console.log('Programs API returned error:', programsResponse.message);
+        setError(programsResponse.message || 'Unable to load programs. Please try again.');
       }
 
       if (testsResponse.success) {
         setAllTests(testsResponse.data);
+      } else {
+        // Don't crash if tests fail - just log it
+        console.log('Tests API returned error:', testsResponse.message);
       }
 
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError('Failed to connect to server');
+      // Don't crash the app - show user-friendly message
+      setError('Unable to load content. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

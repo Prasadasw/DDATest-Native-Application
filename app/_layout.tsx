@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthProvider } from "../contexts/AuthContext";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -22,36 +23,38 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="splash" options={{ headerShown: false }} />
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="intro/index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="introscreen" options={{ headerShown: false }} />
-          <Stack.Screen name="nda" options={{ headerShown: false }} />
-          <Stack.Screen name="ssp" options={{ headerShown: false }} />
-          <Stack.Screen name="welcome" options={{ headerShown: false }} />
-          <Stack.Screen 
-            name="program-tests" 
-            options={{ 
-              headerShown: false,
-              presentation: 'card',
-            }} 
-          />
-          <Stack.Screen 
-            name="test-screen" 
-            options={{ 
-              headerShown: false,
-              presentation: 'card',
-            }} 
-          />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="splash" options={{ headerShown: false }} />
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="intro/index" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="introscreen" options={{ headerShown: false }} />
+            <Stack.Screen name="nda" options={{ headerShown: false }} />
+            <Stack.Screen name="ssp" options={{ headerShown: false }} />
+            <Stack.Screen name="welcome" options={{ headerShown: false }} />
+            <Stack.Screen 
+              name="program-tests" 
+              options={{ 
+                headerShown: false,
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen 
+              name="test-screen" 
+              options={{ 
+                headerShown: false,
+                presentation: 'card',
+              }} 
+            />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

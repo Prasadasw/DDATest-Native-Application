@@ -87,6 +87,36 @@ class ApiService {
       if (!response.ok) {
         const errorText = await response.text();
         console.log('❌ Error response:', errorText);
+        
+        // Handle specific error cases gracefully
+        if (response.status === 403) {
+          console.log('🔒 Access denied - returning safe response');
+          return {
+            success: false,
+            message: "Access expired. Please contact support or log in with a valid account.",
+            data: null
+          } as T;
+        }
+        
+        if (response.status === 401) {
+          console.log('🔐 Unauthorized - returning safe response');
+          return {
+            success: false,
+            message: "Please log in to continue.",
+            data: null
+          } as T;
+        }
+        
+        if (response.status >= 500) {
+          console.log('🔧 Server error - returning safe response');
+          return {
+            success: false,
+            message: "Server temporarily unavailable. Please try again later.",
+            data: null
+          } as T;
+        }
+        
+        // For other errors, still throw but with better error message
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
@@ -95,6 +125,17 @@ class ApiService {
       return data;
     } catch (error) {
       console.error('💥 API request failed:', error);
+      
+      // Handle network errors gracefully
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        console.log('🌐 Network error - returning safe response');
+        return {
+          success: false,
+          message: "No internet connection. Please check your network and try again.",
+          data: null
+        } as T;
+      }
+      
       throw error;
     }
   }
