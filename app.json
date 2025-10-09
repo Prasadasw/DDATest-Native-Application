@@ -2,7 +2,7 @@
   "expo": {
     "name": "mind scale test portal",
     "slug": "mind-scale-test-portal",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/logo/LOGO.png",
     "scheme": "ddatest",
@@ -19,7 +19,11 @@
       "Education"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mindscale.testportal",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
